@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecureVault</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        .form-container label {
+            margin-bottom: 10px;
+        }
+        .form-container input[type="file"],
+        .form-container input[type="text"] {
+            margin-bottom: 20px;
+        }
+        .form-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .form-container p {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>SecureVault</h1>
+    <div class="container">
+        <div class="form-container">
+            <form id="upload-form">
+                <label for="file-input">Choose a file to upload:</label>
+                <input type="file" id="file-input" required>
+                <button type="submit">Upload</button>
+            </form>
+            <p id="upload-result"></p>
+        </div>
+        <div class="form-container">
+            <form id="download-form">
+                <label for="file-id-input">Enter Your Secret Key:</label>
+                <input type="text" id="file-id-input" placeholder="Key" required>
+                <button type="submit">Download</button>
+            </form>
+            <p id="download-result"></p>
+        </div>
+        <div class="form-container">
+            <form id="delete-form">
+                <label for="delete-file-id-input">Enter Your Secret Key:</label>
+                <input type="text" id="delete-file-id-input" placeholder="Key" required>
+                <button type="submit">Delete</button>
+            </form>
+            <p id="delete-result"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var fileInput = document.getElementById('file-input');
+            var formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('upload-result').textContent = 'File uploaded. Your Secret Key: ' + data.file_id;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('upload-result').textContent = 'Error uploading file.';
+            });
+        });
+
+        document.getElementById('download-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var fileId = document.getElementById('file-id-input').value;
+
+            fetch('/download/' + fileId)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('File not found');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = fileId;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('download-result').textContent = 'Error downloading file.';
+            });
+        });
+
+        document.getElementById('delete-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var fileId = document.getElementById('delete-file-id-input').value;
+
+            fetch('/delete/' + fileId, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('delete-result').textContent = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('delete-result').textContent = 'Error deleting file.';
+            });
+        });
+    </script>
+</body>
+</html>

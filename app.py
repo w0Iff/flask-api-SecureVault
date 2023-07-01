@@ -25,7 +25,7 @@ def upload():
 
     write_encrypted_file(encrypted_filename, encrypted_data)
 
-    return {"message": "Plik przesłany i zaszyfrowany pomyślnie", "file_id": encrypted_filename}
+    return {"message": "File uploaded and encrypted successfully", "file_id": encrypted_filename}
 
 
 @app.route('/download/<file_id>')
@@ -39,6 +39,14 @@ def download(file_id):
     save_decrypted_file(file_id, decrypted_data)
 
     return send_file(f'tmp/{file_id}', as_attachment=True)
+
+
+@app.route('/delete/<file_id>', methods=['POST'])
+def delete(file_id):
+    delete_encrypted_file(file_id)
+    delete_decrypted_file(file_id)
+
+    return {"message": "File deleted successfully"}
 
 
 def load_key():
@@ -73,6 +81,18 @@ def save_decrypted_file(file_id, data):
         os.makedirs('tmp')
     with open(f'tmp/{file_id}', 'wb') as dec_file:
         dec_file.write(data)
+
+
+def delete_encrypted_file(file_id):
+    file_path = f'encrypted_files/{file_id}'
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+
+def delete_decrypted_file(file_id):
+    file_path = f'tmp/{file_id}'
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 if __name__ == '__main__':
